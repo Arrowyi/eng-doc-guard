@@ -6,31 +6,38 @@ This checkout is the single source of truth for everything the installer ships. 
 
 | Repo file | Role / where it lands |
 |---|---|
-| `SKILL.md` + `references/examples-and-audit-checklist.md` | Skill payload, copied verbatim into each installed skill root |
+| `SKILL.md` + `references/examples.md` | Skill payload, copied verbatim into each installed skill root; agents load `references/` on demand |
 | `scripts/templates/eng-doc-guard.md` | Slash-command template; copied into the opencode/claude command dirs (sentinel line must sit immediately after the frontmatter, body ≤15 non-empty lines) |
 | `scripts/install.py`, `scripts/install.sh` | Installer and its POSIX wrapper (`install.sh` runs `install.py` from `$ENG_DOC_GUARD_SRC_DIR`, or from a shallow git fetch of `$ENG_DOC_GUARD_REMOTE`) |
-| `tests/test_install.py` | Dev-only suite; never shipped to installed roots |
-| `README.md`, `AGENTS.md` | Outside-facing and maintainer docs, subject to the skill's own audit |
+| `tests/test_install.py`, `tests/acceptance-fixtures.md` | Dev-only installer suite and manual skill-behavior fixtures; never shipped to installed roots |
+| `README.md`, `AGENTS.md`, `docs/design-rationale.md` | Repo docs, never shipped; subject to the skill's own audit |
 
 Every installed skill root carries the manifest; the suite verifies payload hashes, manifest content, and the command sentinel.
+
+Before changing a mechanism of the skill (iron laws, Change Card, silence boundary, distillation, ownership of existing doc suites) or the installer's manifest and sentinel ownership, read [`docs/design-rationale.md`](docs/design-rationale.md) for why it exists and when to revisit it.
 
 ## Change → verification
 
 | Change | Run |
 |---|---|
-| `SKILL.md`, `references/**` | Review the fixture diff against `references/examples-and-audit-checklist.md`, then `python3 tests/test_install.py` (fixture-integrity + line-budget tests cover them) |
+| `SKILL.md`, `references/**` | Rewrite the matching `docs/design-rationale.md` entry in place, update the affected fixtures in `tests/acceptance-fixtures.md` and walk them by hand, then `python3 tests/test_install.py`; keep `SKILL.md` to rules only and move examples into `references/` |
 | `scripts/install.py`, `scripts/install.sh`, `scripts/templates/**` | Full `python3 tests/test_install.py` + `bash -n scripts/install.sh` |
-| `README.md`, `AGENTS.md` | Dogfood audit against the skill's iron laws + `python3 tests/test_install.py` (the in-suite portability scan covers both) |
+| `README.md`, `AGENTS.md`, `docs/**` | Dogfood audit against the skill's iron laws and distillation check + `python3 tests/test_install.py` (the in-suite portability scan covers them) |
+
+## Update together
+
+- `VERSION` in `scripts/install.py` and the manifest `version` assertion in `tests/test_install.py`; bump it whenever the shipped payload changes behavior.
+- `PAYLOAD_FILES` in `scripts/install.py` and in `tests/test_install.py`.
 
 ## Prohibitions
 
 - Never hand-edit an installed root or its manifest; local edits abort the next install until `--force`.
-- Never commit developer-machine paths; shipped artifacts (`SKILL.md`, `references/`, `scripts/`, `README.md`, `AGENTS.md`) stay 100% portable.
+- Never commit developer-machine paths; `SKILL.md`, `references/`, `scripts/`, `docs/`, `README.md`, and `AGENTS.md` stay 100% portable.
 - Never touch the command sentinel: it must remain immediately after the frontmatter, and the template body stays within the suite's line cap.
 
 ## Publish checklist
 
-1. Set `ENG_DOC_GUARD_REMOTE` in `scripts/install.sh` to the canonical repo URL (`ENG_DOC_GUARD_REF` defaults to `main`).
+1. Confirm `ENG_DOC_GUARD_REMOTE` in `scripts/install.sh` still points to the canonical repo URL (`ENG_DOC_GUARD_REF` defaults to `main`).
 2. Tag the release.
 3. Run the full suite and `bash -n scripts/install.sh`.
 4. Self-install proof: `python3 scripts/install.py --client opencode`, then verify the installed root (manifest present, `SKILL.md` byte-identical to the checkout, command sentinel intact).

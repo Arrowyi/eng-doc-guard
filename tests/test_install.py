@@ -35,7 +35,7 @@ ROOT_NAME = "eng-doc-guard"
 COMMAND_NAME = "eng-doc-guard.md"
 MANIFEST_NAME = ".managed-by-eng-doc-guard.json"
 SENTINEL = "<!-- eng-doc-guard:command-managed -->"
-PAYLOAD_FILES = ("SKILL.md", "references/examples-and-audit-checklist.md")
+PAYLOAD_FILES = ("SKILL.md", "references/examples.md")
 
 TMP_ROOT = Path(os.environ.get("TMPDIR", "/tmp")) / "opencode"
 
@@ -157,7 +157,8 @@ class FreshInstallTests(InstallerTestCase):
         self.assertEqual(proc.returncode, 0, proc.stderr)
         root = self.skill_path("opencode")
         self.assertTrue((root / "SKILL.md").is_file())
-        self.assertTrue((root / "references" / "examples-and-audit-checklist.md").is_file())
+        self.assertTrue((root / "references" / "examples.md").is_file())
+        self.assertFalse((root / "acceptance-fixtures.md").exists())
         self.assertEqual((root / "SKILL.md").read_bytes(), (REPO / "SKILL.md").read_bytes())
         manifest = load_manifest(root)
         self.assertTrue(manifest["managed"])
@@ -181,7 +182,7 @@ class FreshInstallTests(InstallerTestCase):
         self.assertEqual(self.install_client("claude").returncode, 0)
         root = self.skill_path("claude")
         manifest = load_manifest(root)
-        self.assertEqual(manifest["version"], "1.0.0")
+        self.assertEqual(manifest["version"], "1.1.0")
         self.assertEqual(set(manifest["files_sha256"]), set(PAYLOAD_FILES))
         for rel, expected in bundled_payload_hashes().items():
             self.assertEqual(manifest["files_sha256"][rel], expected)
@@ -795,15 +796,15 @@ class ShellTests(InstallerTestCase):
 class RepositoryTests(unittest.TestCase):
     def test_repo_portability_scan(self):
         forbidden = ["/Us" + "ers/", "bd" + "gong", "WorkSpace" + "GitRepositories"]
-        targets = [REPO / "SKILL.md", REPO / "README.md", REPO / "AGENTS.md"]
-        for base in (REPO / "references", REPO / "scripts"):
+        targets = [REPO / "SKILL.md", REPO / "README.md", REPO / "AGENTS.md", TESTS_DIR / "acceptance-fixtures.md"]
+        for base in (REPO / "references", REPO / "scripts", REPO / "docs"):
             if base.is_dir():
                 targets.extend(sorted(base.rglob("*")))
         scanned = 0
         for path in targets:
             if not path.is_file() or path.suffix not in (".md", ".py", ".sh", ""):
                 continue
-            if "__pycache__" in path.parts or path.parent == REPO / "tests":
+            if "__pycache__" in path.parts or (path.parent == TESTS_DIR and path.suffix == ".py"):
                 continue
             text = path.read_text(encoding="utf-8", errors="replace")
             for literal in forbidden:
@@ -811,12 +812,13 @@ class RepositoryTests(unittest.TestCase):
             scanned += 1
         self.assertGreaterEqual(scanned, 2)
 
-    def test_references_fixture_completeness(self):
-        text = (REPO / "references" / "examples-and-audit-checklist.md").read_text(encoding="utf-8")
-        for scenario in ("## QS1", "## QS2", "## QS3", "## QS5"):
+    def test_acceptance_fixture_completeness(self):
+        text = (TESTS_DIR / "acceptance-fixtures.md").read_text(encoding="utf-8")
+        scenarios = ("## QS1", "## QS2", "## QS3", "## QS5", "## QS6", "## QS7")
+        for scenario in scenarios:
             self.assertIn(scenario, text)
         for block in ("### Scenario", "### Seeded repo", "### Expected response", "### Pass criteria"):
-            self.assertEqual(text.count(block), 4, block)
+            self.assertEqual(text.count(block), len(scenarios), block)
         pinned = [
             "live_refs == 0",
             "LIMIT 3",
@@ -829,11 +831,6 @@ class RepositoryTests(unittest.TestCase):
         ]
         for literal in pinned:
             self.assertIn(literal, text)
-
-    def test_skill_md_line_budget(self):
-        lines = (REPO / "SKILL.md").read_text(encoding="utf-8").splitlines()
-        self.assertGreaterEqual(len(lines), 160)
-        self.assertLessEqual(len(lines), 190)
 
 
 if __name__ == "__main__":

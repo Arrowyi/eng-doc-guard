@@ -15,14 +15,14 @@ MANIFEST_NAME = ".managed-by-eng-doc-guard.json"
 ROOT_NAME = "eng-doc-guard"
 COMMAND_NAME = "eng-doc-guard.md"
 COMMAND_SENTINEL = "<!-- eng-doc-guard:command-managed -->"
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 LOCK_NAME = ".eng-doc-guard-install.lock"
 BAK_NAME = ".eng-doc-guard.bak"
 TMP_PREFIX = ".eng-doc-guard.tmp."
 COMMAND_TMP_SUFFIX = ".tmp."
 STALE_LOCK_AGE = 300.0
 LOCK_ATTEMPTS = 5
-PAYLOAD_FILES = ("SKILL.md", "references/examples-and-audit-checklist.md")
+PAYLOAD_FILES = ("SKILL.md", "references/examples.md")
 CLIENTS = ("opencode", "claude", "cursor", "codex")
 
 SCRIPTS_DIR = Path(__file__).resolve().parent

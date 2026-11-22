@@ -1,13 +1,16 @@
 # eng-doc-guard
 
-An agent skill that keeps a repository's top-level engineering documents small, accurate, and grounded in the code, and never changes them without your approval.
+An agent skill that keeps a repository's top-level engineering documents small, accurate, and grounded in the code, records *why* the project's mechanisms exist, and never changes a document without your approval.
+
+It is a lightweight guard, not a process framework: it does not make your project follow a spec, and it leaves documentation suites you already maintain untouched.
 
 ## Why it exists
 
-Project docs go wrong in two ways, whether a person or a coding agent maintains them:
+Project docs go wrong in three ways, whether a person or a coding agent maintains them:
 
 1. **Docs bloat and lose their boundaries.** `README.md` fills with implementation details no outside reader needs. `AGENTS.md` and `CLAUDE.md` turn into duplicate copies full of static directory trees. Changelogs creep into current-state docs, and statements drift away from the code.
 2. **Agents write too freely or too early.** Files are edited silently, build commands are guessed, and half-settled brainstorming lands in docs that should describe what is true now.
+3. **The reasons get lost.** Months later nobody remembers what a rule or workflow was for, so it is either kept out of fear or removed and the original problem returns.
 
 ## What it governs
 
@@ -17,22 +20,24 @@ Four current-state documents, offered as an opt-in menu sized to your repo. It r
 |---|---|
 | `README.md` | Landing page for outside users |
 | `AGENTS.md` / `CLAUDE.md` | Operating notes for coding agents |
-| `ARCHITECTURE.md` (or `docs/architecture.md`) | Module structure and one-way dependency rules |
-| Technical Design Doc (`docs/design*.md` or `docs/design/*.md`) | Settled decisions, trade-offs, rejected alternatives |
+| `docs/architecture.md` | Where things live: layers, module boundaries, dependency rules, and where to look for a given change or problem |
+| `docs/design-rationale.md` | Why mechanisms, rules, and workflows exist, when to revisit them, and ideas you asked to keep |
+
+The two `docs/` files stay distilled: they grow much more slowly than the code, and every run proposes merging or removing entries that no longer earn their place. If your repo already has ADRs or its own design or architecture docs, the skill only makes suggestions about them and uses non-colliding names for its own files.
 
 Three iron laws decide what stays in them:
 
 - **1. Information hiding (`README.md`).** Keep a fact only if an external user needs it to evaluate, install, invoke, or trust the software without reading its source.
 - **2. Non-inferable single source of truth (`AGENTS.md`).** Keep only what an agent would get wrong on its first try or spend many steps rediscovering. That means non-default conventions, co-change rules, "never do X" invariants, and the `Change -> Verification` map. Directory trees and facts readable from manifests are evicted. There is one canonical file (`AGENTS.md` or `CLAUDE.md`), with at most a one-line `@AGENTS.md` pointer in the other.
-- **3. Current state and settled decisions only.** History belongs to Git. Docs are rewritten in place. An overturned option survives only as a timeless `Rejected Alternatives` entry in the design doc. Unsettled discussion produces zero file writes.
+- **3. Current state, settled decisions, and ideas you asked to record.** History belongs to Git. Docs are rewritten in place. A settled decision that is not built yet is recorded with a "not yet in code" note, and an overturned option survives only as a timeless rejected alternative. Unsettled discussion produces zero file writes unless you explicitly ask to keep it as an open idea.
 
-Architecture Decision Records (ADRs, under `docs/adr/`) and `CHANGELOG.md` are out of scope: never audited, never generated.
+`CHANGELOG.md` is out of scope: never audited, never generated.
 
 ## Workflows
 
-- **Single-doc write / refresh.** Write or clean up one named top-level document.
-- **Repo-wide audit and right-sized menu.** Reports internal-detail leaks, duplication, historical noise, and code-vs-doc drift. It then right-sizes the set: `README.md` + `AGENTS.md` for small repos, `ARCHITECTURE.md` only at 3 or more decoupled modules, and a design doc only for non-trivial trade-offs. If your docs are already sound, it says so and changes nothing.
-- **New-requirement / settled-design sync.** Once a design decision is settled, it folds the decision into the design doc in place. If the change moves architecture boundaries and the code has not landed yet, you choose: **Option A** (default) updates the design doc now and defers `ARCHITECTURE.md`, `README.md`, and `AGENTS.md` to a post-implementation checklist; **Option B** rewrites `ARCHITECTURE.md` to the settled target now, explicitly listing the modules not yet in code.
+- **Single-doc write / refresh.** Write or clean up one named document.
+- **Repo-wide audit.** Reports leaks, duplication, historical noise, and drift, then recommends only the docs your repo needs. If your docs are already sound, it says so and changes nothing.
+- **Decision sync.** Records a newly settled decision, and the reason for it, in `docs/design-rationale.md`, and defers other docs until the code lands.
 
 **Silence boundary.** It stays silent during pure coding or debugging turns, code-comment and commit-message edits, and reader-facing writing under `userdoc/`. It never adds wake-up blocks to your `AGENTS.md` or `CLAUDE.md`.
 
@@ -88,9 +93,10 @@ With no argument it runs `all`. Or just ask:
 
 - "Audit and clean up our top-level docs."
 - "Refresh README.md."
-- "Sync this settled design decision into docs/design.md."
+- "Record in the design rationale why this workflow exists."
 
 ## Further reading
 
-- [`references/examples-and-audit-checklist.md`](references/examples-and-audit-checklist.md): worked before/after evictions and manual acceptance fixtures.
+- [`references/examples.md`](references/examples.md): worked before/after examples of how the rules apply.
+- [`docs/design-rationale.md`](docs/design-rationale.md): why this skill works the way it does.
 - [`AGENTS.md`](AGENTS.md): repository maintainer guide.
