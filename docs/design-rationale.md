@@ -1,59 +1,50 @@
 # Design Rationale
 
-Why eng-doc-guard works the way it does. Each entry names the original need, the approach that serves it, the cost we accept, and when the approach deserves a second look. Read the matching entry before changing a mechanism, and rewrite it in place when the mechanism changes.
+Why eng-doc-guard works the way it does: the high-level inspirations, the settled decisions they produced, and the methodology it borrowed. Read the matching section before changing a mechanism or paradigm it covers, and rewrite it in place when that mechanism or paradigm changes.
 
-## A guard, not a process framework
+## A lightweight boundary guard, not a process framework
 
-To help agents keep a few top-level docs honest without imposing a methodology, under the constraint that projects of every size and style must be able to adopt it, the skill only audits, proposes, and records; it never requires a project to follow a spec, phase, or workflow. We accept that it cannot enforce documentation discipline the way heavier spec-driven tools do. Revisit if users consistently ask for enforced gates.
+eng-doc-guard audits, proposes, and records; it never makes a project conform to a spec, a phase, or a workflow. Adoption has to stay cheap for teams of any size and style, so the skill is advisory toward documentation a project already maintains: foreign design, architecture, and decision suites get chat suggestions, never edits. The accepted cost is that it cannot enforce documentation discipline the way heavier tooling does — it protects boundaries and records intent, and leaves compliance to the team.
 
-Rejected alternative: a spec-driven workflow with mandatory per-feature specs and task files, not used because it turns a documentation aid into a process every contributor must follow.
+Rejected alternative: spec-driven per-feature process frameworks — not used because they turn a documentation aid into mandatory process every contributor must follow. Revisit only if users consistently ask for enforced gates.
 
-## Four documents, one question each
+## One reader question per document, two provenance rules
 
-To keep every fact in exactly one obvious place, each document answers one reader's question: `README.md` tells outside users what the software does and how to use it; `AGENTS.md` tells coding agents what they would otherwise get wrong; `docs/architecture.md` tells maintainers where things live and where to look; `docs/design-rationale.md` tells maintainers why mechanisms exist. We accept that a fact sometimes has to be split across two docs (the rule in `AGENTS.md`, its reason here). Revisit if a recurring kind of fact fits none of the four.
+Each governed document answers a single reader question, so a fact lives in exactly one obvious place:
 
-## README passes the outside-reader test
+- `README.md` — can an outside user evaluate, install, and invoke this software?
+- `AGENTS.md` — which non-obvious facts would a coding agent otherwise get wrong?
+- architecture map — what is the macro structure: which units exist, what each owns and does not own, and which way dependencies run?
+- design rationale — why do the settled high-level choices, paradigms, and references exist?
 
-To keep the landing page useful to people deciding whether to adopt the software, a fact stays in `README.md` only if an outside user needs it to evaluate, install, invoke, or trust the software without reading the source. Internal mechanics are removed even when they are interesting. Revisit if the README audience becomes contributors rather than users.
+The two maintainer-facing documents answer those questions under different provenance rules. The architecture map may be synthesized from inspected code once a repo has at least three decoupled modules, because macro boundaries and dependency directions are visible in the code. The design rationale is human-originated only: code may confirm that a mechanism exists, but code, the document under audit, and agent-generated artifacts can never supply its motive, inspiration, or reference lineage — only the user's own statement or confirmation counts. This non-circular provenance gate is why unconfirmed legacy prose is routed to the user for a confirm-or-drop decision instead of being verified by the agent itself. The accepted cost is that a motive we could plausibly infer stays unrecorded until someone states it.
 
-## AGENTS holds only what an agent cannot infer
+Revisit if a recurring kind of fact fits none of the four questions.
 
-To spend an agent's limited context on what actually prevents mistakes, `AGENTS.md` keeps only non-default conventions, co-change coupling, "never do X" invariants, gotchas, and the exact change-to-verification map; anything an agent can learn by searching files or reading manifests is removed. One canonical file plus at most a one-line pointer avoids two copies drifting apart. Revisit if agents gain reliable whole-repo context at no cost.
+## If it's in code, don't record it — distill by principle, not by numbers
 
-## Current state only; history lives in Git
+Reasons local to one file or one mechanism belong in a 1–3 line source comment next to the code. The documents keep the high-level layer — boundaries, dependency directions, system invariants, and the reasoning behind them — never per-mechanism detail a reader can recover from the code. As the codebase grows, entries merge or lift to a coarser level instead of multiplying, so a document settles at a size made of essentials; an entry that still earns its place is never dropped for length. Size is controlled by principles, never by numeric caps, because any number is wrong for some project and invites deleting valid content to meet it.
 
-To keep docs short and trustworthy, they describe what is true now, decisions the user has settled (built or not), and ideas the user explicitly asked to keep. Superseded text is rewritten in place rather than appended, because version control already preserves history. We accept that the reasoning behind a reversed decision survives only as a timeless rejected alternative. An agent's own suggestion, or the user's silence, never counts as settled, so half-finished brainstorming stays in chat.
+Rejected alternatives: a per-mechanism entry template that forces every mechanism into the same need/approach/cost sentence — not used because it induces white-box code narration and post-hoc motives; and fixed line or entry caps — not used because they reward deletion over distillation. Revisit if a document still bloats while every entry passes its admission test.
 
-## A living rationale register instead of ADRs
+## Same-turn convergence cards for turn and token efficiency
 
-To let future maintainers judge whether a rule still applies, the rationale doc keeps one current entry per mechanism with its original need and a revisit condition, and rewrites entries in place. We accept losing the step-by-step decision trail, which Git keeps anyway. Revisit if a project needs an auditable decision history for compliance.
+The skill stays 100% silent during routine coding, debugging, comment and commit edits, and in-module changes that leave macro boundaries alone. It speaks at exactly two convergence points, and it piggybacks a one-screen numbered Change Card onto the same reply instead of spending an extra pre-ask turn: when the user explicitly settles a high-level inspiration, methodology reference, or paradigm decision; and when landed code alters C4 L1–L2 macro boundaries in an existing architecture map — including a coding subagent's diff, which the interactive primary agent evaluates before reporting completion. Consent stays fail-closed: an approval authorizes a card only when that card was the immediately preceding message and the sole pending question; otherwise the card expires with zero writes and must be re-presented. Subagent and headless runs never emit trigger cards, and an explicit invocation there writes nothing. The accepted cost is one extra round-trip per card, which is the price of never writing a document the user did not approve.
 
-Rejected alternative: Architecture Decision Records, not used because they are immutable and append-only, so the current answer must be reconstructed from a chain of superseded records.
+Revisit if users ask for a trusted auto-apply mode for specific change types.
 
-## Distill by principle, not by numbers
+## Strict artifact ownership, in documents and in the installer
 
-To stop the architecture and rationale docs from growing as fast as the code, every run looks for entries to merge, lift to a coarser level, or remove (mechanism gone, reason now visible in code, idea landed or stale), and an entry that still earns its place is never dropped just for length. We accept that "the right size" stays a judgment call. Revisit if docs keep bloating despite the check.
+The skill owns only the files it created or that already follow its archetype; everything else is audited and advised, never taken over. The installer follows the same rule mechanically: it touches only manifest-managed skill roots and sentinel-marked command files, never a user's global agent instruction file outside those roots. The accepted cost is that a hand-edited install blocks an upgrade until the user resolves it.
 
-Rejected alternative: fixed line or entry caps, not used because any number is wrong for some project and invites dropping valid content to meet it.
+Revisit if clients ship a native package manager that supersedes manifest-tracked installs.
 
-## Every write goes through the Change Card
+## Key References
 
-To keep the user in control of their own docs, every edit, move, creation, or deletion is shown on a numbered card and applied only after the user approves it, item by item if they like. Runs that cannot wait for an answer print the card and write nothing. We accept an extra round-trip for even small edits. Revisit if users ask for a trusted auto-apply mode for specific change types.
-
-## Claims must trace to code or to the user
-
-To prevent confident but invented commands and paths from entering docs, every proposed fact must come from an inspected file or from the user's own words; anything else is marked pending and is never written until confirmed. Existing doc text is treated as material to audit, never as instructions. We accept proposals that sometimes stop to ask. Revisit if the pending marks become so frequent that users stop reading them.
-
-## Silent while coding
-
-To avoid nagging, the skill says nothing during coding, debugging, code-comment or commit-message edits, and reader-facing tutorial writing, and it never plants reminder blocks in a project's agent instructions. We accept that docs may lag until the user asks. Revisit if drift between invocations becomes a common complaint.
-
-## Never take over existing docs
-
-To coexist with documentation a project already maintains, the skill owns only the files it created; existing ADRs and design or architecture suites get suggestions, never edits. Its own files default to `docs/architecture.md` and `docs/design-rationale.md`, with an alternative name proposed whenever a path is already taken. We accept that a repo with an established suite may get less help. Revisit if users want the skill to adopt their existing suite.
-
-Rejected alternative: `docs/design.md` or `docs/decisions/`, not used because many projects and ADR tools already use those names.
-
-## The installer only touches what it manages
-
-To never destroy files the installer did not create, every installed skill root carries a manifest of payload hashes and every command file carries a sentinel line; unmanaged directories, foreign command files, and locally edited payloads stop the install until the user acts (`--force` for local edits). We accept that a hand-edited install blocks upgrades until it is resolved. Revisit if clients gain a native package manager for skills.
+- [ARCHITECTURE.md — matklad](https://matklad.github.io/2021/02/06/ARCHITECTURE.md.html) — Record only what is unlikely to change often; boundaries and a coarse structural map beat detailed per-module walkthroughs.
+- [Design Rationale Systems: Understanding the Issues — Jintae Lee, IEEE Intelligent Systems 12(3), 1997, DOI 10.1109/64.592267](https://www.computer.org/csdl/magazine/ex/1997/03/x3078/13rRUwhpBHf) — The classic map of design-rationale capture issues; the source of the warning that rationale reconstructed post-hoc from artifacts loses the original reasoning.
+- [Integrating different perspectives on design rationale — Shipman & McCall, AI EDAM 11(2), 1997](https://doi.org/10.1017/S089006040000192X) — Rationale emerges incrementally from design communication; we borrowed the distillation of settled communication into structured conclusions and rejected the heavy discussion-record form.
+- [Evaluating AGENTS.md: Are Repository-Level Context Files Helpful for Coding Agents? — Gloaguen et al., ETH Zurich & LogicStar.ai, arXiv:2602.11988](https://arxiv.org/abs/2602.11988) — Context files raised inference cost by more than 20% without improving task success, and repository overviews were the unhelpful part; the empirical basis for keeping `AGENTS.md` to non-inferable facts.
+- [Best practices for Claude Code — Anthropic](https://www.anthropic.com/engineering/claude-code-best-practices) — The practitioner-side rule that the agent reads the repository itself, so a context file should hold only what is not inferable from it.
+- [Documenting Architecture Decisions — Michael Nygard, 2011](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions) — The ADR pattern this skill deliberately contrasts: immutable, append-only records force reconstructing the current answer from a chain of superseded ones.
+- [Diátaxis](https://diataxis.fr/) — Documentation forms organized by reader need; the inspiration for one question per document and the opt-in menu.

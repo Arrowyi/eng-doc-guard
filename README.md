@@ -1,6 +1,6 @@
 # eng-doc-guard
 
-An agent skill that keeps a repository's top-level engineering documents small, accurate, and grounded in the code, records *why* the project's mechanisms exist, and never changes a document without your approval.
+An agent skill that keeps a repository's top-level engineering documents small, accurate, and grounded in the code, records *why* the project's key design decisions were made, and never changes a document without your approval.
 
 It is a lightweight guard, not a process framework: it does not make your project follow a spec, and it leaves documentation suites you already maintain untouched.
 
@@ -20,8 +20,8 @@ Four current-state documents, offered as an opt-in menu sized to your repo. It r
 |---|---|
 | `README.md` | Landing page for outside users |
 | `AGENTS.md` / `CLAUDE.md` | Operating notes for coding agents |
-| `docs/architecture.md` | Where things live: layers, module boundaries, dependency rules, and where to look for a given change or problem |
-| `docs/design-rationale.md` | Why mechanisms, rules, and workflows exist, when to revisit them, and ideas you asked to keep |
+| `docs/architecture.md` | The macro shape of the system: layers, module boundaries, dependency rules, and system-wide invariants |
+| `docs/design-rationale.md` | Distilled design inspirations, core decisions, and key reference summaries, plus ideas you asked to keep |
 
 The two `docs/` files stay distilled: they grow much more slowly than the code, and every run proposes merging or removing entries that no longer earn their place. If your repo already has ADRs or its own design or architecture docs, the skill only makes suggestions about them and uses non-colliding names for its own files.
 
@@ -37,13 +37,13 @@ Three iron laws decide what stays in them:
 
 - **Single-doc write / refresh.** Write or clean up one named document.
 - **Repo-wide audit.** Reports leaks, duplication, historical noise, and drift, then recommends only the docs your repo needs. If your docs are already sound, it says so and changes nothing.
-- **Decision sync.** Records a newly settled decision, and the reason for it, in `docs/design-rationale.md`, and defers other docs until the code lands.
+- **Decision sync.** Records a newly settled decision in `docs/design-rationale.md` — with the reason, when you have confirmed it — and defers other docs until the code lands.
 
-**Silence boundary.** It stays silent during pure coding or debugging turns, code-comment and commit-message edits, and reader-facing writing under `userdoc/`. It never adds wake-up blocks to your `AGENTS.md` or `CLAUDE.md`.
+**Routine silence, two convergence points.** It stays silent during pure coding or debugging turns, code-comment and commit-message edits, and reader-facing writing under `userdoc/`. It speaks at exactly two convergence points — when you settle a high-level design inspiration, methodology reference, or paradigm decision, and when landed code (including a delegated coding agent's diff) alters the C4 L1–L2 macro boundaries of an existing architecture map — piggybacking a one-screen Change Card on the same reply; subagent and headless runs emit no trigger cards. It never injects standing guidance blocks into your `AGENTS.md` or `CLAUDE.md`.
 
 ## Consent: the Change Card
 
-Every edit, move, creation, or deletion waits behind a one-screen numbered Change Card. Nothing is written until you reply.
+Every edit, move, creation, or deletion waits behind a one-screen numbered Change Card. Nothing is written until you reply. An approval applies to the card shown in the immediately preceding reply, or to an earlier card you explicitly name; a card the conversation has moved past expires with zero writes and is shown again before anything is written.
 
 The card's header tags are in Chinese. `[保留]` ("kept") lists what stays as-is. Each numbered `[变更 N]` ("change N") is one proposed change: its action (for example `删除`, "delete"), then after the `|` the reason, such as `铁律 #1` ("Iron Law 1"). The last line (`回复`, "reply") lists your options. An abridged card:
 
@@ -93,7 +93,7 @@ With no argument it runs `all`. Or just ask:
 
 - "Audit and clean up our top-level docs."
 - "Refresh README.md."
-- "Record in the design rationale why this workflow exists."
+- "Record in the design rationale the inspiration behind this design decision."
 
 ## Further reading
 

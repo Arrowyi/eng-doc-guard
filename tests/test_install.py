@@ -182,7 +182,7 @@ class FreshInstallTests(InstallerTestCase):
         self.assertEqual(self.install_client("claude").returncode, 0)
         root = self.skill_path("claude")
         manifest = load_manifest(root)
-        self.assertEqual(manifest["version"], "1.1.0")
+        self.assertEqual(manifest["version"], "1.2.0")
         self.assertEqual(set(manifest["files_sha256"]), set(PAYLOAD_FILES))
         for rel, expected in bundled_payload_hashes().items():
             self.assertEqual(manifest["files_sha256"][rel], expected)

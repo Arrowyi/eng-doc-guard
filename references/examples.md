@@ -68,32 +68,106 @@ A Markdown link to `AGENTS.md` is equally valid. Create the pointer only with us
 
 **Disposition:** the duplicate body is `Drop` (already present in `AGENTS.md` at proposal time); adding the 1-line pointer is one numbered `[变更]` item, flagged in Path 2 as consolidation.
 
-### A5. Design Rationale: from debate log to distilled entries
+### A5. Design Rationale — code mechanics and a debate log distilled into inspirations and references
 
 **Seed (to rewrite).** `docs/design-rationale.md` contains:
 
 ```text
+## Outbox retry backoff
+To meet the need for reliable sync, under flaky-network constraints, we use
+`computeBackoff(attempt, baseMs=1800000)` in src/outbox/retry.ts.
+
 ## 2024-05 sync discussion
-We first pushed every edit to the server immediately (v0.3), then switched to a
-local outbox in v0.5 after users lost edits on flaky networks. Retry backoff came later.
-## Outbox format
+[C1] 2024-05-11: first we pushed every edit immediately (v0.3).
+[R2] H020: switched to a local outbox after users lost edits on flaky networks.
+[Q3] Exponential or linear retry backoff?
+[A4] Exponential, settled 2024-05-12.
 The outbox is a JSON array written by src/outbox/store.ts with fs.writeFileSync.
+
+## Local-first inspiration
+Chosen because the team was inspired by the Ink & Switch local-first essay:
+an edit must survive a dropped connection and sync later.
+
+## Lock file
+A separate lock file exists because it was easier at the time.
 ```
 
 **Result (after).**
 
 ```text
-## Local outbox before sync
-To keep edits safe on unreliable networks, under the constraint that the app must
-work offline, every edit is written to a local outbox first and synced in the
-background, accepting that two devices can briefly disagree; revisit if the
-product ever requires real-time collaboration.
-Rejected alternative: push each edit immediately, not used because a dropped
+## Local-first architecture
+The product is built local-first: every edit is written to a local outbox first and
+synced in the background, so an edit survives a dropped connection. Two devices may
+briefly disagree; the accepted cost is eventual consistency and manual conflict
+resolution. Revisit if the product ever requires real-time collaborative editing.
+Rejected alternative: push each edit immediately — not used because a dropped
 connection loses the edit.
+
+## Key references
+- [Local-first software](https://www.inkandswitch.com/local-first/) — framed the offline-first, background-sync model and its eventual-consistency trade-off.
 
 ## Open Ideas
 - Show the user how many edits are still waiting to sync.
 ```
 
-**Disposition:** the timeline prose is rewritten in place as one Y-statement entry (Iron Law #3); the push-immediately option survives only as a timeless `Rejected Alternatives` line because it is likely to be proposed again; the outbox-format paragraph is `Drop` (inferable from `src/outbox/store.ts`); the pending-edits line lands under `Open Ideas` only because the user explicitly asked to record it.
+**Disposition:** the outbox-format paragraph and the `computeBackoff(...)` retry entry are `Drop` (code-identifiable mechanics inferable from `src/outbox/store.ts` and `src/outbox/retry.ts`); the backoff reason moves to a 1–3 line code comment at that site. The `[C1]`/`[R2]`/`[Q3]`/`[A4]` debate log with hop and timestamp tags is stripped into one conclusion-only paragraph (Iron Law #3). The local-first inspiration and its reference were stated by the user in the conversation, so they are distilled in place with the settled decision, the accepted trade-off, and the revisit condition; the push-each-edit-immediately option was weighed and overturned by the user in that same conversation, so it survives only as the timeless `Rejected Alternatives` line with its technical cause. The lock-file motive has no user confirmation in the conversation, so it is `Ask User (Confirm motive vs. Drop)`, tagged `[待用户确认]` — never self-verified from code or repo prose, written only if the user confirms. The pending-edits line lands under `Open Ideas` only because the user explicitly asked to record it.
+
+### A6. Architecture Map — volatile file lookups and debt evicted, macro boundaries kept
+
+**Seed (to rewrite).** `docs/architecture.md` contains:
+
+```text
+## System context
+The CLI reads local files, applies edits, and syncs them through a background queue;
+the sync layer reaches the remote store over HTTPS and lies behind the CLI.
+
+## Layer responsibilities
+- `cli/` — argument parsing and user-facing output; it does not own persistence.
+- `sync/` — outbox, retry, and conflict detection; it does not render output.
+- `store/` — durable persistence; it does not decide when to sync.
+
+## Dependency rules
+`cli → sync → store`, plus `sync → remote API`. No reverse imports: `store/` never
+imports `sync/`, and `sync/` never imports `cli/`.
+
+## Invariants & fault boundaries
+Every edit is persisted to the outbox before any network call; a failed sync leaves
+the outbox intact, so a remote failure never loses a local edit.
+
+## Where to look
+| Change / problem | Files |
+|---|---|
+| retry backoff | src/sync/retry.ts, test/sync/retry.test.ts |
+| auth token refresh | src/auth/token.ts, test/auth/token.test.ts |
+
+## Sync internals
+`MAX_BACKOFF_MS = 1800000`; `editAllowTwins()` deduplicates queue entries.
+
+## Follow-up Debt
+- Split src/sync/queue.ts once it passes 800 lines.
+- Rename `legacyFlush()` after the next release.
+```
+
+**Result (after).**
+
+```text
+## System context
+The CLI reads local files, applies edits, and syncs them through a background queue;
+the sync layer reaches the remote store over HTTPS and lies behind the CLI.
+
+## Layer responsibilities
+- `cli/` — argument parsing and user-facing output; it does not own persistence.
+- `sync/` — outbox, retry, and conflict detection; it does not render output.
+- `store/` — durable persistence; it does not decide when to sync.
+
+## Dependency rules
+`cli → sync → store`, plus `sync → remote API`. No reverse imports: `store/` never
+imports `sync/`, and `sync/` never imports `cli/`.
+
+## Invariants & fault boundaries
+Every edit is persisted to the outbox before any network call; a failed sync leaves
+the outbox intact, so a remote failure never loses a local edit.
+```
+
+**Disposition:** the `Where to look` file/test table, the internal constants and helper name (`MAX_BACKOFF_MS`, `editAllowTwins`), and the `Follow-up Debt` list are all `Drop` — a file search answers the table in one step, the names and numbers are code-identifiable, and the debt list is temporary (the map's volatile-detail eviction). The macro module roles, one-way dependency rules, and the persist-before-sync invariant are `[保留]`: they are slow-changing and not rediscoverable in one step. Each negative boundary claim ("does not own persistence") was checked against the module's imports; any claim that could not be verified that way would carry `[待用户确认]` and stay out of the write until confirmed.
 

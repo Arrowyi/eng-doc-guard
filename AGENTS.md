@@ -14,13 +14,15 @@ This checkout is the single source of truth for everything the installer ships. 
 
 Every installed skill root carries the manifest; the suite verifies payload hashes, manifest content, and the command sentinel.
 
-Before changing a mechanism of the skill (iron laws, Change Card, silence boundary, distillation, ownership of existing doc suites) or the installer's manifest and sentinel ownership, read [`docs/design-rationale.md`](docs/design-rationale.md) for why it exists and when to revisit it.
+Before changing a mechanism of the skill (iron laws, Change Card, silence boundary and convergence triggers, distillation, provenance gate, ownership of existing doc suites) or the installer's manifest and sentinel ownership, read [`docs/design-rationale.md`](docs/design-rationale.md) for the high-level inspirations and settled conclusions behind it.
+
+When the user settles a high-level design inspiration, methodology reference, or paradigm decision, propose synthesizing it in place into `docs/design-rationale.md` (with `eng-doc-guard` if available); when a landed code change alters C4 L1–L2 macro module boundaries, propose syncing `docs/architecture.md` in the same turn before finishing.
 
 ## Change → verification
 
 | Change | Run |
 |---|---|
-| `SKILL.md`, `references/**` | Rewrite the matching `docs/design-rationale.md` entry in place, update the affected fixtures in `tests/acceptance-fixtures.md` and walk them by hand, then `python3 tests/test_install.py`; keep `SKILL.md` to rules only and move examples into `references/` |
+| `SKILL.md`, `references/**` | Keep `docs/design-rationale.md` consistent in place (it holds high-level inspirations and conclusions, not per-mechanism entries), update the affected fixtures in `tests/acceptance-fixtures.md` and walk them by hand, then `python3 tests/test_install.py`; keep `SKILL.md` to rules only and move examples into `references/` |
 | `scripts/install.py`, `scripts/install.sh`, `scripts/templates/**` | Full `python3 tests/test_install.py` + `bash -n scripts/install.sh` |
 | `README.md`, `AGENTS.md`, `docs/**` | Dogfood audit against the skill's iron laws and distillation check + `python3 tests/test_install.py` (the in-suite portability scan covers them) |
 
