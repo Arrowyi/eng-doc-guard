@@ -2,7 +2,7 @@
 
 On-demand companion to `SKILL.md`: worked before/after rewrites showing how the rules apply.
 
-Across every example, `Drop` must cite a section already on disk (or the code site proving a mechanism is gone), `Fold` respects the ≤30-line / ≤10-line caps, `Merge` preserves every fact that still passes its admission test, and no write happens before the Change Card is confirmed.
+Across every example, `Drop` must cite a section already on disk (`<file>#<section>`) or the code site proving a mechanism is gone; `Fold` applies the post-eviction relative comparator from `SKILL.md` Section 4, never a numeric cap; `Merge` preserves every fact that still passes its admission test; a surviving project-specific term gets its first-use plain-language gloss on the three human-facing documents; and no write happens before the Change Card is confirmed.
 
 ### A1. `README.md` — white-box mechanics evicted to 0 lines
 
@@ -15,9 +15,9 @@ SQLite runs in WAL mode; a `.undo-pending.json` sidecar records in-flight rollba
 and the self-heal pipeline re-ranks hot rows every 30 seconds.
 ```
 
-**Result (after):** all of it is removed — 0 lines of replacement. External users never need storage, lock, or ranking mechanics to evaluate, install, or invoke the tool.
+**Result (after):** all of it is removed — 0 lines of replacement. External users never need storage, lock, or ranking mechanics to evaluate, install, or invoke the tool, and these mechanics change across version upgrades behind the public interface.
 
-**Disposition:** `Drop` for each mechanic; reason = Iron Law #1 (Semantic Black-Box Test fails). Observable behavior that passes the test — e.g. "data stays on your machine under `~/.local/share/<app>/`" — is kept instead.
+**Disposition:** `Drop` for each mechanic; reason = Iron Law #1 (Information Hiding / Version-Stability Black-Box Test fails). An observable contract that passes the test — e.g. "data stays on your machine under `~/.local/share/<app>/`" — is kept instead.
 
 ### A2. `AGENTS.md` — directory tree evicted, verification map kept
 
@@ -44,29 +44,30 @@ tests/
 
 **Result (after):** the directory tree is gone (a file search answers it in one step), while the `Change → Verification` table stays — an agent cannot rediscover that map without multi-step exploration.
 
-**Disposition:** `Drop` the tree (Iron Law #2 static fact); `[保留]` the verification map (First-Try Mistake & Cost Test passes).
+**Disposition:** `Drop` the tree (Iron Law #2, static fact obtainable from directory layout); `[保留]` the verification map (First-Try Mistake & Cost Test passes).
 
-### A3. Public CLI table — fold at ≤30 lines, link out at >30
+### A3. Public CLI usage block — fold only under the relative comparator
 
-**Case A — 20-line flag table, no usage reference file.** `Fold`: keep the table inline in `README.md`, because it is ≤30 lines and no public usage reference exists.
+**Case A — a compact flag table, no usage reference file on disk.** After the Iron Law #1/#3 evictions run, `Fold`: keep the table inline in `README.md`, because no dedicated public CLI/API usage reference file exists on disk **and** the table stays shorter than the surviving core landing-page sections combined (background + capabilities + install/quickstart).
 
-**Case B — 45-line flag table, or a `docs/cli.md` reference exists.** Do not inline it. Keep 3–5 representative examples and add a link to the full reference. Disposition: `Move to Existing Doc` (target exists) or `Ask User (Drop vs. Create & Move)` (target missing).
+**Case B — an exhaustive flag reference, or a `docs/cli.md` reference already on disk.** Do not inline all of it. Keep representative usage examples inline and link to the full reference. Disposition: `Move to Existing Doc` (target exists) or `Ask User (Drop vs. Create & Move)` (target missing).
 
-**Rule of thumb:** the 30-line cap is a ceiling, not a target — when a reference file already exists, link out even for shorter tables.
+**Rule of thumb:** the comparator is the reader's job, not a line count. When a reference file already exists on disk, link out even for a table that would fit inline; when the usage block would outweigh the surviving core sections, keep representative examples and link out.
 
-### A4. Dual `AGENTS.md` + `CLAUDE.md` full copies → one canonical + 1-line pointer
+### A4. Dual `AGENTS.md` + `CLAUDE.md` full copies → one canonical + 2-line managed pointer
 
 **Seed (to fix).** `AGENTS.md` and `CLAUDE.md` both contain the same full body.
 
-**Result (after).** Keep `AGENTS.md` as the sole canonical file. Replace the full `CLAUDE.md` body with a 1-line pointer:
+**Result (after).** Keep `AGENTS.md` as the sole canonical file. Replace the full `CLAUDE.md` body with a 2-line managed pointer:
 
 ```text
+<!-- eng-doc-guard:managed -->
 @AGENTS.md
 ```
 
-A Markdown link to `AGENTS.md` is equally valid. Create the pointer only with user consent; in a Claude-only repo, `CLAUDE.md` is the canonical file instead.
+Create the pointer only with user consent; the card discloses that line 1 receives the sentinel, so the second file is a thin compatibility pointer rather than a second body. A repo whose strict MDX doc-site parser rejects HTML comments can decline the pointer entirely. In a Claude-only repo, `CLAUDE.md` is the canonical file instead.
 
-**Disposition:** the duplicate body is `Drop` (already present in `AGENTS.md` at proposal time); adding the 1-line pointer is one numbered `[变更]` item, flagged in Path 2 as consolidation.
+**Disposition:** the duplicate body is `Drop` (already present in `AGENTS.md#<section>` at proposal time); adding the pointer is one numbered `[变更]` item (action `纳管` for an existing second file, or `新建` for a fresh pointer), flagged in Path 2 as consolidation.
 
 ### A5. Design Rationale — code mechanics and a debate log distilled into inspirations and references
 
@@ -95,11 +96,13 @@ A separate lock file exists because it was easier at the time.
 **Result (after).**
 
 ```text
+<!-- eng-doc-guard:managed -->
 ## Local-first architecture
-The product is built local-first: every edit is written to a local outbox first and
-synced in the background, so an edit survives a dropped connection. Two devices may
-briefly disagree; the accepted cost is eventual consistency and manual conflict
-resolution. Revisit if the product ever requires real-time collaborative editing.
+The product is built local-first: every edit goes into a local outbox — a queue of
+edits waiting to reach the server — and syncs in the background, so an edit survives
+a dropped connection. Two devices may briefly disagree; the accepted cost is eventual
+consistency and manual conflict resolution. Revisit if the product ever requires
+real-time collaborative editing.
 Rejected alternative: push each edit immediately — not used because a dropped
 connection loses the edit.
 
@@ -110,9 +113,9 @@ connection loses the edit.
 - Show the user how many edits are still waiting to sync.
 ```
 
-**Disposition:** the outbox-format paragraph and the `computeBackoff(...)` retry entry are `Drop` (code-identifiable mechanics inferable from `src/outbox/store.ts` and `src/outbox/retry.ts`); the backoff reason moves to a 1–3 line code comment at that site. The `[C1]`/`[R2]`/`[Q3]`/`[A4]` debate log with hop and timestamp tags is stripped into one conclusion-only paragraph (Iron Law #3). The local-first inspiration and its reference were stated by the user in the conversation, so they are distilled in place with the settled decision, the accepted trade-off, and the revisit condition; the push-each-edit-immediately option was weighed and overturned by the user in that same conversation, so it survives only as the timeless `Rejected Alternatives` line with its technical cause. The lock-file motive has no user confirmation in the conversation, so it is `Ask User (Confirm motive vs. Drop)`, tagged `[待用户确认]` — never self-verified from code or repo prose, written only if the user confirms. The pending-edits line lands under `Open Ideas` only because the user explicitly asked to record it.
+**Disposition:** the outbox-format paragraph and the `computeBackoff(...)` retry entry are `Drop` (code-identifiable mechanics inferable from `src/outbox/store.ts` and `src/outbox/retry.ts`); the backoff reason moves to a 1–3 line code comment at that site. The `[C1]`/`[R2]`/`[Q3]`/`[A4]` debate log with hop and timestamp tags is stripped into one conclusion-only paragraph (Iron Law #3). The surviving term "outbox" gets a first-use plain-language gloss via `Rewrite in Place` (`改写/补释`) — the code identifier `src/outbox/` stays verbatim while the prose explains it once. The local-first inspiration and its reference were stated by the user in the conversation, so they are distilled in place with the settled decision, the accepted trade-off, and the revisit condition; the push-each-edit-immediately option was weighed and overturned by the user in that same conversation, so it survives only as the timeless `Rejected Alternatives` line with its technical cause. The lock-file motive has no user confirmation in the conversation, so it is `Ask User (Confirm motive vs. Drop)`, tagged `[待用户确认]` — never self-verified from code or repo prose, written only if the user confirms. The pending-edits line lands under `Open Ideas` only because the user explicitly asked to record it.
 
-### A6. Architecture Map — volatile file lookups and debt evicted, macro boundaries kept
+### A6. Architecture Map — volatile detail evicted, macro boundaries and a core flow kept
 
 **Seed (to rewrite).** `docs/architecture.md` contains:
 
@@ -151,6 +154,7 @@ the outbox intact, so a remote failure never loses a local edit.
 **Result (after).**
 
 ```text
+<!-- eng-doc-guard:managed -->
 ## System context
 The CLI reads local files, applies edits, and syncs them through a background queue;
 the sync layer reaches the remote store over HTTPS and lies behind the CLI.
@@ -159,6 +163,16 @@ the sync layer reaches the remote store over HTTPS and lies behind the CLI.
 - `cli/` — argument parsing and user-facing output; it does not own persistence.
 - `sync/` — outbox, retry, and conflict detection; it does not render output.
 - `store/` — durable persistence; it does not decide when to sync.
+
+## Core business flow: edit → sync
+1. Trigger: the user edits a file through `cli/`.
+2. `cli/` validates the edit and hands it to `sync/`, which records it in the outbox
+   and returns control; `store/` is not on this path.
+3. In the background, `sync/` drains the outbox to the remote store; the edit's
+   durable owner moves from `sync/`'s outbox to the remote store only after the
+   remote store acknowledges it.
+4. Guaranteed invariant: a remote failure leaves the outbox intact, so the edit is
+   never lost and is retried on the next drain.
 
 ## Dependency rules
 `cli → sync → store`, plus `sync → remote API`. No reverse imports: `store/` never
@@ -169,5 +183,4 @@ Every edit is persisted to the outbox before any network call; a failed sync lea
 the outbox intact, so a remote failure never loses a local edit.
 ```
 
-**Disposition:** the `Where to look` file/test table, the internal constants and helper name (`MAX_BACKOFF_MS`, `editAllowTwins`), and the `Follow-up Debt` list are all `Drop` — a file search answers the table in one step, the names and numbers are code-identifiable, and the debt list is temporary (the map's volatile-detail eviction). The macro module roles, one-way dependency rules, and the persist-before-sync invariant are `[保留]`: they are slow-changing and not rediscoverable in one step. Each negative boundary claim ("does not own persistence") was checked against the module's imports; any claim that could not be verified that way would carry `[待用户确认]` and stay out of the write until confirmed.
-
+**Disposition:** the `Where to look` file/test table, the internal constants and helper name (`MAX_BACKOFF_MS`, `editAllowTwins`), and the `Follow-up Debt` list are all `Drop` under **Iron Law #4 (Slow-Changing Macro Altitude / Pace Layering)** — a file search answers the table in one step, the names and numbers are code-identifiable, and the debt list is temporary. The macro module roles, the one-way dependency rules, the new module-interaction-altitude core flow (trigger → participating modules and collaboration order → state-ownership transition and guaranteed invariant, with zero function call stacks), and the persist-before-sync invariant are `[保留]`: they are slow-changing and not rediscoverable in one step. The file now opens with `<!-- eng-doc-guard:managed -->` on line 1, so it is managed and Trigger 2 may maintain it. Each negative boundary claim ("does not own persistence") was checked against the module's imports; a claim that could not be verified that way would carry `[待用户确认]` and stay out of the write until confirmed.

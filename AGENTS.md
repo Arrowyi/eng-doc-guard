@@ -1,3 +1,4 @@
+<!-- eng-doc-guard:managed -->
 # eng-doc-guard Maintainer Guide
 
 This checkout is the single source of truth for everything the installer ships. Installed roots are build artifacts: never hand-edit them or their `.managed-by-eng-doc-guard.json` manifest.
@@ -14,9 +15,15 @@ This checkout is the single source of truth for everything the installer ships. 
 
 Every installed skill root carries the manifest; the suite verifies payload hashes, manifest content, and the command sentinel.
 
-Before changing a mechanism of the skill (iron laws, Change Card, silence boundary and convergence triggers, distillation, provenance gate, ownership of existing doc suites) or the installer's manifest and sentinel ownership, read [`docs/design-rationale.md`](docs/design-rationale.md) for the high-level inspirations and settled conclusions behind it.
+Before changing a mechanism of the skill or the installer's manifest and sentinel ownership, read [`docs/design-rationale.md`](docs/design-rationale.md) for the high-level inspirations and settled conclusions behind these mechanisms:
 
-When the user settles a high-level design inspiration, methodology reference, or paradigm decision, propose synthesizing it in place into `docs/design-rationale.md` (with `eng-doc-guard` if available); when a landed code change alters C4 L1–L2 macro module boundaries, propose syncing `docs/architecture.md` in the same turn before finishing.
+- **Four iron laws** — #1 information hiding / version-stability black-box test (`README.md`); #2 non-inferable single source of truth (`AGENTS.md` / `CLAUDE.md`); #3 current state, settled decisions, and recorded intent only (history belongs to git); #4 slow-changing macro altitude / Pace Layering (`docs/architecture.md`, explicitly exempt from #2).
+- **Ownership sentinel** — `<!-- eng-doc-guard:managed -->` on line 1 marks a managed doc; unmarked existing docs are never edited without an explicit enrollment (纳管) item approved on the Change Card.
+- **Seven-way dispositions** — 纳管 / 新建 / 删除 / 折叠 / 合并 / 改写/补释 / 迁移, plus the pending actions 待补 / 待决 / 待确认, all carried on the one-screen numbered Change Card.
+- **Silence boundary & marker-aware convergence triggers** — routine intra-module coding/debugging turns stay 100% silent; the architecture trigger fires ONLY on a managed Architecture Map, and a landed change counts as a boundary change when it alters any of: C4 L1–L2 macro module/layer boundaries, one-way dependency directions, cross-module core business flows, or system-wide invariants.
+- **Distillation & provenance gate** — keep every governed doc distilled to content that still passes admission; record a design rationale motive only from explicit user confirmation, never reverse-engineered from code.
+
+When the user settles a high-level design inspiration, methodology reference, or paradigm decision, propose synthesizing it in place into `docs/design-rationale.md` (with `eng-doc-guard` if available).
 
 ## Change → verification
 
@@ -35,6 +42,7 @@ When the user settles a high-level design inspiration, methodology reference, or
 
 - Never hand-edit an installed root or its manifest; local edits abort the next install until `--force`.
 - Never commit developer-machine paths; `SKILL.md`, `references/`, `scripts/`, `docs/`, `README.md`, and `AGENTS.md` stay 100% portable.
+- The repo's governed docs (`README.md`, `AGENTS.md`, `docs/design-rationale.md`) carry the first-line `<!-- eng-doc-guard:managed -->`; keep it on line 1 when editing them.
 - Never touch the command sentinel: it must remain immediately after the frontmatter, and the template body stays within the suite's line cap.
 
 ## Publish checklist

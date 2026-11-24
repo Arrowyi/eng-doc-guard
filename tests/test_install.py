@@ -8,6 +8,7 @@ import hashlib
 import io
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -71,6 +72,24 @@ def sentinel_after_frontmatter(text):
         if lines[index].strip() == "---":
             return index + 1 < len(lines) and lines[index + 1].strip() == SENTINEL
     return False
+
+
+def text_outside_seeded_blocks(text):
+    """Drop each '### Seeded repo' block: from its heading to the next '###' or '##' heading."""
+    kept = []
+    in_seeded = False
+    for line in text.splitlines():
+        stripped = line.strip()
+        if in_seeded:
+            if stripped.startswith("##"):
+                in_seeded = False
+            else:
+                continue
+        if stripped.startswith("### Seeded repo"):
+            in_seeded = True
+            continue
+        kept.append(line)
+    return "\n".join(kept)
 
 
 def snapshot(root):
@@ -182,7 +201,7 @@ class FreshInstallTests(InstallerTestCase):
         self.assertEqual(self.install_client("claude").returncode, 0)
         root = self.skill_path("claude")
         manifest = load_manifest(root)
-        self.assertEqual(manifest["version"], "1.2.0")
+        self.assertEqual(manifest["version"], "1.3.0")
         self.assertEqual(set(manifest["files_sha256"]), set(PAYLOAD_FILES))
         for rel, expected in bundled_payload_hashes().items():
             self.assertEqual(manifest["files_sha256"][rel], expected)
@@ -831,6 +850,41 @@ class RepositoryTests(unittest.TestCase):
         ]
         for literal in pinned:
             self.assertIn(literal, text)
+
+    def test_no_dogmatic_numeric_caps_in_shipped_payload(self):
+        banned_caps = (
+            r"<\s*200\s+lines",
+            r"≤\s*30",
+            r"≤\s*10",
+            r"≤\s*5\s+source",
+            r"≥\s*3[\s-]+decoupled",
+            r"3[–-]5\s+(?:representative\s+)?examples",
+            r"≤\s*8\s+items",
+        )
+
+        def assert_no_caps(path, text):
+            for pattern in banned_caps:
+                matches = re.findall(pattern, text)
+                self.assertEqual(matches, [], "%s matches banned cap %r" % (path, pattern))
+
+        for rel in ("SKILL.md", "references/examples.md"):
+            assert_no_caps(rel, (REPO / rel).read_text(encoding="utf-8"))
+
+        fixtures = TESTS_DIR / "acceptance-fixtures.md"
+        remainder = text_outside_seeded_blocks(fixtures.read_text(encoding="utf-8"))
+        self.assertTrue(remainder.strip(), "scanned remainder of acceptance-fixtures.md is empty")
+        self.assertIn("### Expected response", remainder, "remainder lost Expected response headings")
+        self.assertIn("### Pass criteria", remainder, "remainder lost Pass criteria headings")
+        assert_no_caps(str(fixtures), remainder)
+
+    def test_repo_governed_docs_carry_managed_sentinel(self):
+        sentinel = "<!-- eng-doc-guard:managed -->"
+        for rel in ("README.md", "AGENTS.md", "docs/design-rationale.md"):
+            path = REPO / rel
+            self.assertTrue(path.is_file(), "%s is missing" % rel)
+            self.assertGreater(path.stat().st_size, 0, "%s is empty" % rel)
+            first_line = path.read_text(encoding="utf-8").splitlines()[0]
+            self.assertEqual(first_line, sentinel, "%s line 1 is not the managed sentinel" % rel)
 
 
 if __name__ == "__main__":
