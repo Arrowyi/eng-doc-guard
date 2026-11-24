@@ -53,11 +53,11 @@ Interactive run — present this card and stop before any write; the card opens 
 
 ### Scenario
 
-A developer runs a normal audit/refresh on a repository seeded with white-box leaks, past-tense logs, present-tense public contracts, a surviving but unexplained public domain term, a duplicated canonical file, public CLI usage, and an architecture map carrying volatile code-identifiable detail.
+A developer runs a normal audit/refresh on a repository seeded with white-box leaks, past-tense logs, present-tense public contracts, a surviving but unexplained public domain term, a duplicated canonical file, public CLI usage, and an architecture map carrying fast-changing C4 L3–L4 implementation detail. The architecture map's `Where to look` table mixes mechanical file/test lookup rows with one row encoding a code-verified cross-file co-change coupling. After the card is shown, the developer challenges the architecture evictions with "architecture.md is for human architects; code-readable content doesn't need to be deleted".
 
 ### Seeded repo
 
-`README.md`, `AGENTS.md`, and `docs/architecture.md` are already managed — each carries the first-line `<!-- eng-doc-guard:managed -->` sentinel — so the card's edits to them need no enrollment items. The duplicate full `CLAUDE.md` is unmarked; the consolidation item that rewrites it into the 2-line pointer carries action `纳管`, enrolling it (per examples A4).
+`README.md`, `AGENTS.md`, and `docs/architecture.md` are already managed — each carries the first-line `<!-- eng-doc-guard:managed -->` sentinel — so the card's edits to them need no enrollment items. The duplicate full `CLAUDE.md` is unmarked; the consolidation item that rewrites it into the 2-line pointer carries action `纳管`, enrolling it, and the duplicate-body `Drop` declares `[依赖变更 N]` on that enrollment item (per examples A4).
 
 `README.md` contains:
 
@@ -78,7 +78,7 @@ A duplicate full `CLAUDE.md` (same body as `AGENTS.md`) also exists.
 `docs/architecture.md` contains:
 
 - the macro system context, layer and module responsibility boundaries, one-way dependency rules, and cross-module core business/runtime flows;
-- a `Where to look (change → .ts / .test.ts)` table mapping changes to file and test paths;
+- a `Where to look (change → .ts / .test.ts)` table mapping changes to file and test paths, plus one mixed row encoding a cross-file co-change coupling that is verified in inspected code (a variant leaves it unverified in code/config, so it stays unconfirmed in the conversation);
 - internal function and constant names (`editAllowTwins`, `MAX_BACKOFF_MS`);
 - a `记录在案的后续债务` (follow-up debt) section.
 
@@ -97,11 +97,15 @@ A numbered Change Card whose per-item dispositions are:
 | `AGENTS.md` directory tree | `Drop` (Iron Law #2 static fact) | evicted |
 | Dead routing pointer to `docs/missing-spec.md` | `Drop` (Iron Law #2; the target path is confirmed absent by directory/file inspection) | evicted |
 | `Change → Verification` map | `[保留]` (Iron Law #2) | kept |
-| Duplicate full `CLAUDE.md` | `Drop` the duplicate body (cited against `AGENTS.md#<section>`) plus one numbered item with action `纳管` writing the 2-line managed pointer into the existing unmarked file: line 1 `<!-- eng-doc-guard:managed -->`, line 2 `@AGENTS.md` | consolidated |
+| Duplicate full `CLAUDE.md` | `[变更 N · 纳管]` writes the 2-line managed pointer into the existing unmarked file (line 1 `<!-- eng-doc-guard:managed -->`, line 2 `@AGENTS.md`); the duplicate body is a separate `Drop` item (cited against `AGENTS.md#<section>`) that declares `[依赖变更 N]` on that enrollment item | consolidated |
 | Architecture macro context, module boundaries, one-way dependencies, core business flows | `[保留]` (Iron Law #4 Pace Layering; slow-changing) | kept |
-| `Where to look` `.ts`/`.test.ts` table | `Drop` (Iron Law #4 fast-changing lookup detail; a file search answers it) | evicted |
-| Internal names `editAllowTwins`, `MAX_BACKOFF_MS` | `Drop` (Iron Law #4; code-identifiable function/constant names) | evicted |
+| `Where to look` `.ts`/`.test.ts` table | `Drop` (Iron Law #4 Pace Layering: C4 L3–L4 mechanical file/test location rows change at routine commit velocity and rot, and also fail Iron Law #2 so they are dropped outright rather than moved to AGENTS.md) | evicted |
+| Mixed `Where to look` row encoding a code-verified cross-file co-change coupling | `Move to Existing Doc` into `AGENTS.md` as a 1-line co-change rule (tagged `[待用户确认]` and excluded from writes if unverified in inspected code/config) | moved |
+| Internal names `editAllowTwins`, `MAX_BACKOFF_MS` | `Drop` (Iron Law #4 Pace Layering: fast-changing C4 L3–L4 internal function and constant names) | evicted |
 | `记录在案的后续债务` section | `Drop` (Iron Law #4; temporary debt list) | evicted |
+
+- The mixed `Where to look` row encoding a code-verified cross-file co-change coupling is routed via `Move to Existing Doc` into `AGENTS.md` as a 1-line co-change rule (per the Universal Evidence Guard it traces to inspected code; if unverified in code/config it is tagged `[待用户确认]` and excluded from writes instead). The mechanical file-lookup table is never imported into `AGENTS.md`.
+- Under the developer's challenge ("architecture.md is for human architects; code-readable content doesn't need to be deleted"), the agent re-verifies each item's altitude and explains the two-axis orthogonality — exemption from Iron Law #2 code-inferability is separate from enforcement of Iron Law #4 Pace Layering — keeping `Drop` as the recommended disposition for C4 L3–L4 file/symbol inventories (withdrawing `Drop` only for a qualifying C4 L1–L2 coarse macro tree, which becomes `[保留]` or `Merge`), while honoring any `除 N 外` exclusion with 0 writes.
 
 ### Pass criteria
 
@@ -111,6 +115,9 @@ A numbered Change Card whose per-item dispositions are:
 - [ ] The 20-line CLI table is folded inline via the relative comparator (shorter than the surviving core README sections, with no separate reference file on disk) — not by any numeric cap.
 - [ ] The surviving domain term gets a first-use plain-language gloss via `Rewrite in Place` (`改写/补释`), applied after the evictions (evict-before-gloss), and is not dropped.
 - [ ] The duplicate `CLAUDE.md` is consolidated to a single canonical file plus the 2-line managed pointer (line 1 `<!-- eng-doc-guard:managed -->`, line 2 `@AGENTS.md`).
+- [ ] The duplicate-body `Drop` item on the unmarked `CLAUDE.md` declares `[依赖变更 N]` on the `[变更 N · 纳管]` enrollment item; declining or excluding `N` skips the `Drop` transitively with 0 writes to the unmarked file.
+- [ ] The mixed `Where to look` row encoding a code-verified cross-file co-change coupling is routed via `Move to Existing Doc` into `AGENTS.md` as a 1-line co-change rule (or tagged `[待用户确认]` when unverified in inspected code/config), and the mechanical file-lookup table is never imported into `AGENTS.md`.
+- [ ] Under the challenge "architecture.md is for human architects; code-readable content doesn't need to be deleted", the agent explains the two-axis orthogonality (exempt from Iron Law #2 code-inferability, governed by Iron Law #4 Pace Layering), keeps `Drop` as the recommendation for C4 L3–L4 file/symbol inventories, and honors `除 N 外` exclusions with 0 writes.
 - [ ] The resulting 2-line managed pointer is **not** flagged as a duplicate managed sentinel (thin-pointer exemption); only a second full-body managed document in the same role would be.
 
 ## QS3 — Right-Sizing, Anti-Bloat Near-Miss & Unmarked-Compliant Precedence
@@ -198,6 +205,8 @@ A developer runs a Path 2 audit on a large repository that already maintains its
 - Two arc42-style `docs/architecture.md` variants, neither following this skill's archetype: in one the `<!-- eng-doc-guard:managed -->` text appears only inside a fenced code block on line 15; in the other it sits on line 3 after a `# Title` heading.
 - `docs/adr/0001-*.md` through `docs/adr/0012-*.md` and a `docs/design/` folder with several design docs, one of which contains past-tense history.
 - `README.md` exists; no `docs/design-rationale.md`.
+- A standalone non-governed topic reference doc `docs/deployment.md` is linked from `README.md` and contains field reference tables plus one paragraph repeating macro architecture prose; it sits outside the four governed roles' alias lists.
+- A `README.md` fold variant: `README.md` carries an exhaustive CLI usage block of which half is already accurately carried in an existing unmarked `docs/cli.md` (matching the current code-backed CLI contract) and half is net-new.
 - The mechanism's motive appears only in code, comments, and the foreign design docs; the user has not stated or confirmed it in the conversation.
 
 ### Expected response
@@ -208,6 +217,8 @@ A developer runs a Path 2 audit on a large repository that already maintains its
 - Because the arc42 `docs/architecture.md` is an unmarked governed document at a governed alias, offer the 3-way `Ask User` item — `[变更 N · 纳管 | 三选一：① 纳管现有 docs/architecture.md（首行写入 <!-- eng-doc-guard:managed --> 并按规则整理） / ② 不动原文件，另建受管文件 docs/architecture-overview.md（首行写入 <!-- eng-doc-guard:managed -->） / ③ 跳过保持不纳管（仅参考建议，0 写入）]` — with **0 writes unless enrolled**. Any proposed cleanup item on that file declares `[依赖变更 N]`, so skipping or excluding `N` skips them transitively with 0 writes.
 - Recording the mechanism's motive does not auto-create a file and is never derived from code, comments, tests, or the foreign design docs: because no user confirmation exists in the conversation, the motive is one indivisible `Ask User (Confirm motive vs. Drop)` item tagged `[待用户确认]`.
 - If the user confirms the motive and no rationale file exists, the card offers `Ask User` (`新建受管 docs/design-rationale.md（首行写入 <!-- eng-doc-guard:managed -->）并记录` vs. `跳过`).
+- `docs/deployment.md` is a legitimate standalone non-governed topic reference doc: the Change Card carries **0 enrollment (`纳管`) items, 0 full-file delete (`Drop`) items, and 0 direct audit/rewrite items** for it; the paragraph inside it repeating macro architecture prose is mentioned only as an advisory observation in chat, identical to `docs/adr/*`.
+- In the `README.md` fold variant against `docs/cli.md`: the exhaustive usage lines already carried in `docs/cli.md#<section>` and matching the current code-backed CLI contract are `Drop`ped from `README.md` under `§8 item 1(a)`; only the net-new lines are appended to `docs/cli.md` via one card-approved, non-enrolling `Move to Existing Doc` item — 0 `<!-- eng-doc-guard:managed -->` writes to `docs/cli.md`, and its existing content is neither audited nor deleted. `README.md` keeps representative examples and a link-out.
 - `README.md` is audited normally.
 
 ### Pass criteria
@@ -220,6 +231,8 @@ A developer runs a Path 2 audit on a large repository that already maintains its
 - [ ] The mechanism motive is offered as `Ask User (Confirm motive vs. Drop)` tagged `[待用户确认]`; nothing is written from code, comments, tests, or existing prose.
 - [ ] No duplicate decision record is created without the user choosing it.
 - [ ] Any skill-owned new file uses a non-colliding alias and discloses the line-1 `<!-- eng-doc-guard:managed -->` write.
+- [ ] `docs/deployment.md` receives 0 enrollment (`纳管`) items, 0 full-file delete (`Drop`) items, and 0 direct audit/rewrite items on the Change Card; its repeated macro-architecture prose is noted only as advisory chat, never as a numbered card item.
+- [ ] In the fold variant, the already-carried matching lines are `Drop`ped from `README.md` citing `docs/cli.md#<section>` under `§8 item 1(a)`, only the net-new lines are appended via one card-approved, non-enrolling `Move to Existing Doc`, and `docs/cli.md` receives 0 `<!-- eng-doc-guard:managed -->` writes with no audit or deletion of its existing content.
 
 ## QS7 — Distillation Without Over-Pruning
 
@@ -241,7 +254,9 @@ A developer refreshes an existing, managed `docs/design-rationale.md` and `docs/
 - a key reference already written as `[Title](URL) — summary of the borrowed insight`;
 - an unconfirmed legacy motive that appears only in the file, with no user confirmation in the conversation.
 
-`docs/architecture.md` lists twelve small modules one by one, where four coarse groups with one example each would carry the same boundaries.
+`docs/architecture.md` lists twelve small modules one by one — grouping into four coarse macro units `cli/`, `sync/`, `store/`, `auth/` — where four coarse groups with one example each would carry the same boundaries. Alongside the 12-module listing it seeds a separate 4-line coarse directory tree enumerating only `cli/`, `sync/`, `store/`, `auth/` (zero individual files, no intra-module subdirectories) and carrying an entry-path note.
+
+Variants: (i) a repo where that 4-line coarse macro tree is the sole enumeration of the macro units named in the responsibility/dependency prose (no module list or table in the document); (ii) a directory tree descending into internal subdirectories (`src/sync/internal/queue/`) or listing `.ts` files.
 
 ### Expected response
 
@@ -255,7 +270,10 @@ A Change Card with these distillation items:
 | Landed `Open Ideas` item | `Drop`, or promoted into an entry if its motive passes the admission test | evicted or promoted |
 | Long valid invariant entry | `[保留]` (still passes its admission test) | kept |
 | Telegraphic AI-speak paragraph with an unexplained domain term | `Rewrite in Place` (`改写/补释`): strip the AI filler and ledger shorthand, add a first-use plain-language gloss of the term | kept, rewritten |
-| Twelve-module listing | `Merge` into four coarser groups, each with one example | lifted |
+| Twelve-module listing | `Merge` into four coarser groups, each with one example (item `M`) | lifted |
+| Redundant 4-line coarse macro tree (`cli/`, `sync/`, `store/`, `auth/` + entry-path note) | `Merge` into the four-group macro section declaring `[依赖变更 M]` on item `M`, folding the entry-path note into the single macro representation (never `Drop`ped under a blanket tree ban; transitively skipped if `M` is excluded) | merged |
+| Sole-representation coarse macro tree (variant i) | `[保留]` (passes Iron Law #4: coarse nodes named in the prose, zero files, no intra-module expansion) | kept |
+| Deep/file-level directory tree (variant ii) | `Drop` (Iron Law #4: lists files or descends into internal subdirectories without a distinct macro boundary) | evicted |
 | Discussion log with item tags, hop numbers, and debate narration | `Drop` the process traces; keep one distilled conclusion | distilled |
 | Key reference in `[Title](URL) — summary` form | `[保留]` (already the required shape) | kept |
 | Unconfirmed legacy motive | `Ask User (Confirm motive vs. Drop)` tagged `[待用户确认]` | pending confirmation |
@@ -270,3 +288,7 @@ A Change Card with these distillation items:
 - [ ] Discussion-log traces (item tags, hop numbers, timestamps, debate narration) are gone; only the distilled conclusion remains.
 - [ ] The key reference keeps its `[Title](URL) — summary` shape and is not dropped.
 - [ ] The unconfirmed motive is offered for confirmation and never written from code or existing prose.
+- [ ] The 12-module listing is `Merge`d into four coarser macro groups (item `M`), preserving every module fact that still passes its admission test.
+- [ ] The redundant 4-line coarse macro tree is `Merge`d into that section declaring `[依赖变更 M]`, folding its entry-path note into the single macro representation; it is never `Drop`ped under a blanket tree ban, and it is skipped transitively with 0 writes when `M` is excluded.
+- [ ] In variant (i), the sole-representation coarse macro tree is `[保留]` — it passes Iron Law #4 as the sole enumeration of the macro units named in the responsibility/dependency prose.
+- [ ] In variant (ii), the deep/file-level tree (internal subdirectories like `src/sync/internal/queue/` or listed `.ts` files) is `Drop`ped under Iron Law #4, citing pace layering rather than code readability.

@@ -2,7 +2,7 @@
 description: Write, refresh, distill, or audit a repository's top-level engineering documents with the eng-doc-guard skill.
 ---
 <!-- eng-doc-guard:command-managed -->
-Load the installed `eng-doc-guard` `SKILL.md` and execute it with the arguments below.
+Load the installed eng-doc-guard SKILL.md fresh in this turn (never rely on an earlier turn's cached skill text) and execute it with the arguments below.
 
 Arguments: `$ARGUMENTS` — one of `all`, `readme`, `agents`, `arch`, `design` (the Design Rationale), `sync`; when empty, use `all`.
 

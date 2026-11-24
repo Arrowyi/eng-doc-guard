@@ -92,6 +92,29 @@ def text_outside_seeded_blocks(text):
     return "\n".join(kept)
 
 
+def slice_between(text, start_marker, end_marker, label):
+    """Lines from the first line starting with start_marker up to (excluding) the
+    first later line starting with end_marker; end_marker None runs to end of text.
+    label names the file + slice in the error when a marker heading is missing."""
+    lines = text.splitlines()
+    start = None
+    for index, line in enumerate(lines):
+        if line.startswith(start_marker):
+            start = index
+            break
+    if start is None:
+        raise ValueError("%s: no line starts with %r" % (label, start_marker))
+    end = len(lines)
+    if end_marker is not None:
+        for index in range(start + 1, len(lines)):
+            if lines[index].startswith(end_marker):
+                end = index
+                break
+        else:
+            raise ValueError("%s: no line after %r starts with %r" % (label, start_marker, end_marker))
+    return "\n".join(lines[start:end])
+
+
 def snapshot(root):
     """Map every path under root to a stable digest (dirs get a marker)."""
     root = Path(root)
@@ -201,7 +224,7 @@ class FreshInstallTests(InstallerTestCase):
         self.assertEqual(self.install_client("claude").returncode, 0)
         root = self.skill_path("claude")
         manifest = load_manifest(root)
-        self.assertEqual(manifest["version"], "1.3.0")
+        self.assertEqual(manifest["version"], "1.3.1")
         self.assertEqual(set(manifest["files_sha256"]), set(PAYLOAD_FILES))
         for rel, expected in bundled_payload_hashes().items():
             self.assertEqual(manifest["files_sha256"][rel], expected)
@@ -885,6 +908,68 @@ class RepositoryTests(unittest.TestCase):
             self.assertGreater(path.stat().st_size, 0, "%s is empty" % rel)
             first_line = path.read_text(encoding="utf-8").splitlines()[0]
             self.assertEqual(first_line, sentinel, "%s line 1 is not the managed sentinel" % rel)
+
+    def test_iron_law_4_orthogonality_and_no_inferability_bleed(self):
+        # Check 1 — SKILL.md slices: bare "- directory trees;" stays in the Iron Law #2
+        # block only; the Iron Law #4 block and the Architecture Map lens block carry
+        # the non-circular wording and no Iron Law #2 inferability wording.
+        skill = (REPO / "SKILL.md").read_text(encoding="utf-8")
+        il2 = slice_between(skill, "**Iron Law #2:", "**Iron Law #3:", "SKILL.md Iron Law #2 block")
+        il4 = slice_between(skill, "**Iron Law #4:", "## 4.", "SKILL.md Iron Law #4 block")
+        lens = slice_between(
+            skill, "### 3. Architecture Map", "### 4. Design Rationale", "SKILL.md Architecture Map lens block"
+        )
+        self.assertIn(
+            "- directory trees;", il2,
+            "SKILL.md Iron Law #2 block lost the bare '- directory trees;' eviction",
+        )
+        self.assertNotIn(
+            "- directory trees;", il4,
+            "SKILL.md Iron Law #4 block must not keep the bare '- directory trees;' blanket tree ban",
+        )
+        self.assertIn(
+            "- file-level or deep directory trees", il4,
+            "SKILL.md Iron Law #4 block must use the '- file-level or deep directory trees' non-circular wording",
+        )
+        for phrase in ("code-identifiable", "a file search answers"):
+            self.assertNotIn(
+                phrase, il4,
+                "SKILL.md Iron Law #4 block bleeds the Iron Law #2 inferability phrase %r" % phrase,
+            )
+            self.assertNotIn(
+                phrase, lens,
+                "SKILL.md Architecture Map lens block bleeds the Iron Law #2 inferability phrase %r" % phrase,
+            )
+
+        # Check 2 — references/examples.md A6 slice (to EOF): no inferability wording.
+        a6 = slice_between(
+            (REPO / "references" / "examples.md").read_text(encoding="utf-8"),
+            "### A6.", None, "references/examples.md A6 slice",
+        )
+        for phrase in ("a file search answers", "not rediscoverable in one step", "code-identifiable"):
+            self.assertNotIn(
+                phrase, a6,
+                "references/examples.md A6 slice contains the Iron Law #2 inferability phrase %r" % phrase,
+            )
+
+        # Check 3 — acceptance-fixtures.md QS2 slice: no Iron Law #4 line cites the phrases.
+        fixtures = (TESTS_DIR / "acceptance-fixtures.md").read_text(encoding="utf-8")
+        qs2 = slice_between(fixtures, "## QS2", "## QS3", "acceptance-fixtures.md QS2 slice")
+        for line in qs2.splitlines():
+            if "Iron Law #4" not in line:
+                continue
+            for phrase in ("a file search answers", "code-identifiable"):
+                self.assertNotIn(
+                    phrase, line,
+                    "acceptance-fixtures.md QS2 slice has an Iron Law #4 line citing %r: %s" % (phrase, line),
+                )
+
+        # Check 4 — docs/design-rationale.md: zero skill meta-jargon.
+        rationale = (REPO / "docs" / "design-rationale.md").read_text(encoding="utf-8")
+        self.assertNotIn(
+            "Iron Law", rationale,
+            "docs/design-rationale.md contains the skill meta-jargon 'Iron Law'",
+        )
 
 
 if __name__ == "__main__":
